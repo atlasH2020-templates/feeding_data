@@ -1,0 +1,159 @@
+openapi: '3.0.3'
+info:
+  title: ATLAS Service Template - feed_data
+  description: Get quality and quantity of
+  version: 0.0.1
+  contact:
+    email: j.voelker@fodjan.de
+security:
+  - bearerAuth: []
+paths:
+  /rations:
+    get:
+      description: Return all stored rations matching the given filters
+      parameters:
+        - name: date
+          in: query
+          description: only give rations planned or feeded on that specific date
+          schema: 
+            type: string
+        - name: type
+          in: query
+          schema:
+           $ref: '#/components/schemas/RationType'
+      responses:
+        200:
+          description: ok
+          content:
+            aplication/json:
+              schema:
+                 type: array
+                 items: 
+                   $ref: '#/components/schemas/Ration'
+
+  /rations/{id}/evaluation:
+    get:
+      description: Return qualities for that ration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: ok
+          content:
+            aplication/json:
+              schema:
+                 type: array
+                 items: 
+                   $ref: '#/components/schemas/RationWithEvaluation'
+
+components:
+  schemas:
+    URN:
+      type: string
+      pattern: "^urn:[a-z][a-z0-9_.\\-]*:[\\w-.]+"
+      description: 'Uniform resource name of an object with the syntax `urn:<service_id>:<internal_id>`. <service_id> must be the urn of a valid and active ATLAS service.'
+    RationType:
+       type: string
+       description: indicates whether this ration is a planned recipe or a actual fed ration.
+       enum: [PLANNED, FEEDED]
+    Ration:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/RationType'
+        date:
+          type: string
+          format: date-time
+          description: date-time of feeding for type FEEDED or date from where on this ration is planned to be feeded.
+        total_drymatter:
+          type: number
+          description: in kg
+        total_freshmatter:
+          type: number
+          description: in kg
+        pen_distribution:
+          type: array
+          items: 
+            type: object
+            properties:
+              pen_urn:
+                $ref: '#/components/schemas/URN'
+              total_freshmatter:
+                type: number
+                description: in kg
+            additionalProperties: false
+            required: [pen_urn, total_freshmatter]
+        feedstuffs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: internal id
+              name:
+                type: string
+              type:
+                type: string
+                enum: [ROUGHAGE, CONCENTRATE, MINERALS, WATER]
+                description: type of feedstuff
+              drymatter_percentate:
+                type: number
+                minimum: 0
+                maximum: 100
+                description: percentage drymatter of freshmatter
+              amount_drymatter:
+                type: number
+                minimum: 0
+                description: amount of drymatter in the ration
+              amount_freshmatter:
+                type: number
+                minimum: 0
+                description: amount of freshmatter in the ration
+            required: [id, name, type, amount_freshmatter]
+
+    RationWithEvaluation:
+      allOf:
+        - $ref: '#/components/schemas/Ration'
+        - type: object
+          properties:
+            evaluation:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationFigure'
+            feedstuffs:
+              type: array
+              items:
+                type: object
+                properties:
+                  evaluation:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvaluationFigure'
+
+    EvaluationFigure:
+      type: object
+      properties:
+        key: 
+          type: string
+          description: unique identifier for that evaluation-figure. this should also include a prefix in which scope this is measured (per kg feed, per day, percentage of something)
+        value:
+          type: number
+        value_description:
+          type: string
+          description: if there is some textual comment for the value or just text, add it here
+        unit:
+          type: string
+      additionalProperties: false
+      required: [key, value]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

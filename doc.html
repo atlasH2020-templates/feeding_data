@@ -1,0 +1,62 @@
+<html>
+<head>
+    <style type="text/css">
+        body { font-family: courier; font-size:12px; margin-left: 42px; width: 465px; white-space: pre-line; }
+        h2 { margin: 10px 0 0 -22px; font-size:12px; padding: 0 !important }
+        table { font-size: 10px; margin-left: -22px; width: 480px; overflow-wrap: break-work; }
+        table td { overflow-wrap: break-work; }
+        div.header { padding: 0; margin: 0 0 0 -22px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+ATLAS Service Template Specification
+Name                                                    feed_data
+Version                                                     0.1.0
+Author(s)                            J. V&ouml;lker (fodjan GmbH)
+</div>
+
+<h2>The "feed_data" ATLAS Service Template</h2>
+<div style="margin-left: -22px;">
+
+<h2>Abstract</h2>
+
+This document describes the specification for the feed_data service whose purpose is to provide an interface for data-exchange of planned and actual feeding.
+</div>
+<h2>1 Introduction</h2>
+
+<h2>2 Terminology</h2>
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and indicate requirement levels for compliant implementations.
+
+The notation "[xxx]" (xxx in square brackets) is equivalent to "array of xxx".
+
+When used alone, the term "feed_data" refers to "feed_data service template". Instead, "animal_data service" is equivalent to "a service implementing the animal_data service template".
+
+<h2>3 Pre-requisites</h2>
+
+
+<h2>4 Use Scenarios</h2>
+
+
+<h2>5 Service Template API Overview</h2>
+
+
+<h2>6 Data Formats</h2>
+
+
+<h2>7 Access and Authentication</h2>
+
+Farmers MUST have an account setup at the service provider in order to authenticate and access API endpoints. The service implementor is responsible for the creation of accounts; it is not covered in the ATLAS Service Template specifications.
+
+Unless specifically documented in the OpenAPI specifications, all operation must include credentials in form of Bearer authentication (also called token authentication). Clients can obtain an access token on behalf of their user from the service's authorization server (see ATLAS service pairing).
+
+Some of the information held by animal_data services are considered to be sensitive from a GDPR perspective.The service's authorization server MUST request the client's end-user consent at service pairing time in order to deliver an access token.
+
+<h2>8 Dynamic Behaviour</h2>
+
+
+
+</body>
+</html>
