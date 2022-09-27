@@ -1,7 +1,7 @@
 openapi: '3.0.3'
 info:
   title: ATLAS Service Template - feed_data
-  description: Get quality and quantity of
+  description: Get quality and quantity of planned and actual ration data
   version: 0.0.1
   contact:
     email: j.voelker@fodjan.de
