@@ -3,8 +3,6 @@ info:
   title: ATLAS Service Template - feed_data
   description: Get quality and quantity of planned and actual ration data
   version: 0.0.1
-  contact:
-    email: j.voelker@fodjan.de
 security:
   - bearerAuth: []
 paths:
@@ -17,10 +15,13 @@ paths:
           description: only give rations planned or feeded on that specific date
           schema: 
             type: string
+          required: true
         - name: type
           in: query
           schema:
            $ref: '#/components/schemas/RationType'
+           default: PLANNED
+          required: true
       responses:
         200:
           description: ok
@@ -31,7 +32,7 @@ paths:
                  items: 
                    $ref: '#/components/schemas/Ration'
 
-  /rations/{id}/evaluation:
+  /rations/{id}:
     get:
       description: Return qualities for that ration
       parameters:
@@ -49,6 +50,25 @@ paths:
                  type: array
                  items: 
                    $ref: '#/components/schemas/RationWithEvaluation'
+
+  /rations/{id}/feeding:
+    post:
+      description: Insert an actual feeding as event into the system
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ration'
+          
+      responses:
+        201:
+          description: ok
 
 components:
   schemas:
@@ -73,10 +93,12 @@ components:
           description: date-time of feeding for type FEEDED or date from where on this ration is planned to be feeded.
         total_drymatter:
           type: number
-          description: in kg
+          description: total amount of drymatter which has to load for all animals in the pens in kg
+          example: 729
         total_freshmatter:
           type: number
-          description: in kg
+          description: total amount of freshmatter which has to load for all animals in the pens in kg
+          example: 818.9
         pen_distribution:
           type: array
           items: 
@@ -86,7 +108,16 @@ components:
                 $ref: '#/components/schemas/URN'
               total_freshmatter:
                 type: number
-                description: in kg
+                description: total amount of freshmatter calculated out of feedstuff-amounts, number animals and feed_adaption, this part should be unloaded in this pen in kg
+                example: 818.9
+              number_animals:
+                type: integer
+                description: current number of animals in that pen
+                example: 45
+              feed_adaption:
+                type: number
+                description: depending on weather or other environment factors the amount unloaded here can be adapted here in %
+                example: -10
             additionalProperties: false
             required: [pen_urn, total_freshmatter]
         feedstuffs:
@@ -108,14 +139,17 @@ components:
                 minimum: 0
                 maximum: 100
                 description: percentage drymatter of freshmatter
+                example: 89
               amount_drymatter:
                 type: number
                 minimum: 0
-                description: amount of drymatter in the ration
+                description: amount of drymatter per animal and day in the ration
+                example: 18
               amount_freshmatter:
                 type: number
                 minimum: 0
-                description: amount of freshmatter in the ration
+                description: amount of freshmatter per animal and day in the ration
+                example: 20.22
             required: [id, name, type, amount_freshmatter]
 
     RationWithEvaluation:
@@ -132,7 +166,7 @@ components:
               items:
                 type: object
                 properties:
-                  evaluation:
+                  nutrients:
                     type: array
                     items:
                       $ref: '#/components/schemas/EvaluationFigure'
@@ -143,13 +177,17 @@ components:
         key: 
           type: string
           description: unique identifier for that evaluation-figure. this should also include a prefix in which scope this is measured (per kg feed, per day, percentage of something)
+          example: xp
         value:
           type: number
+          example: 900
         value_description:
           type: string
           description: if there is some textual comment for the value or just text, add it here
+          example: crude protein
         unit:
           type: string
+          example: g/kg
       additionalProperties: false
       required: [key, value]
 
