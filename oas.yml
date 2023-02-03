@@ -1,74 +1,101 @@
 openapi: '3.0.3'
 info:
   title: ATLAS Service Template - feed_data
-  description: Get quality and quantity of planned and actual ration data
-  version: 0.0.1
+  description: Get planned and actual ration data and allow to send new ration advices into the system.
+  version: 0.0.2
 security:
   - bearerAuth: []
 paths:
   /rations:
     get:
-      description: Return all stored rations matching the given filters
+      description: Get overview over stored rations
       parameters:
-        - name: date
+        - name: date_start
           in: query
-          description: only give rations planned or feeded on that specific date
-          schema: 
-            type: string
-          required: true
-        - name: type
-          in: query
+          description: Planned start date of ration for filtering data, ISO8601
           schema:
-           $ref: '#/components/schemas/RationType'
-           default: PLANNED
-          required: true
+            type: string
+            format: date-time
+        - name: date_end
+          in: query
+          description: Planned end date of ration for filtering data, ISO8601
+          schema:
+            type: string
+            format: date-time
       responses:
         200:
           description: ok
-          content:
-            aplication/json:
+          content:  
+            application/json:
               schema:
-                 type: array
-                 items: 
-                   $ref: '#/components/schemas/Ration'
-
-  /rations/{id}:
-    get:
-      description: Return qualities for that ration
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: ok
-          content:
-            aplication/json:
-              schema:
-                 type: array
-                 items: 
-                   $ref: '#/components/schemas/RationWithEvaluation'
-
-  /rations/{id}/feeding:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/RationAdvice'
     post:
-      description: Insert an actual feeding as event into the system
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      description: Send a ration-advice and create a new ration with that
       requestBody:
         content:
-          application/json:
+          aplication/json:
             schema:
-              $ref: '#/components/schemas/Ration'
-          
+                type: array
+                items: 
+                  $ref: '#/components/schemas/RationAdvice'
       responses:
         201:
+          description: |-
+            ok
+            todo: add ration-id to response. can be set in body, if not one will be generated
+  /rations/{id}:
+    get:
+      description: Get overview over stored rations
+      parameters:
+        - name: id
+          in: path
+          description: ration-id
+          required: true
+          schema: 
+            type: string
+      responses:
+        200:
           description: ok
+          content:  
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RationAdvice'
+
+  /rations/feedingreport:
+    get:
+      description: Insert an actual feeding as event into the system
+      parameters:
+        - name: date_start
+          in: query
+          description: Start date for filtering data, ISO8601
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: date_end
+          in: query
+          description: End date for filtering data, ISO8601
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: ration_id
+          in: query
+          description: if given, just return feedingreports for a single ration
+          schema:
+            type: string
+      responses:
+        200:
+          description: ok
+          content:  
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/FeedingReport'         
+      
 
 components:
   schemas:
@@ -76,17 +103,12 @@ components:
       type: string
       pattern: "^urn:[a-z][a-z0-9_.\\-]*:[\\w-.]+"
       description: 'Uniform resource name of an object with the syntax `urn:<service_id>:<internal_id>`. <service_id> must be the urn of a valid and active ATLAS service.'
-    RationType:
-       type: string
-       description: indicates whether this ration is a planned recipe or a actual fed ration.
-       enum: [PLANNED, FEEDED]
-    Ration:
+
+    RationAdvice:
       type: object
       properties:
         id:
           type: string
-        type:
-          $ref: '#/components/schemas/RationType'
         date:
           type: string
           format: date-time
@@ -152,44 +174,209 @@ components:
                 example: 20.22
             required: [id, name, type, amount_freshmatter]
 
-    RationWithEvaluation:
-      allOf:
-        - $ref: '#/components/schemas/Ration'
-        - type: object
-          properties:
-            evaluation:
-              type: array
-              items:
-                $ref: '#/components/schemas/EvaluationFigure'
-            feedstuffs:
-              type: array
-              items:
-                type: object
-                properties:
-                  nutrients:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EvaluationFigure'
-
-    EvaluationFigure:
+    FeedingLoadExternalDTO:
       type: object
       properties:
-        key: 
-          type: string
-          description: unique identifier for that evaluation-figure. this should also include a prefix in which scope this is measured (per kg feed, per day, percentage of something)
-          example: xp
-        value:
+        actualLoadedAmountKg:
           type: number
-          example: 900
-        value_description:
+          description: Actual amount loaded in mixer wagon (unit = KG)
+          format: double
+          example: 1980.0
+        amountPerLoadKg:
+          type: number
+          description: Amount that should be loaded in mixer wagon (unit = KG)
+          format: double
+          example: 2000.0
+        id:
+          type: integer
+          description: Feeding load ID
+          format: int64
+          example: 452
+        loadDetails:
+          $ref: '#/components/schemas/LoadingDetailsExternalDTO'
+        loadPosition:
+          type: integer
+          description: Feeding load position used for ordering feeding loads
+          format: int32
+          example: 0
+        status:
+          type: integer
+          description: 'Feeding load status enum 0 = TO DO, 1 = IN PROGRESS , 2 =
+            DONE '
+          format: int32
+          example: 0
+        unloads:
+          type: array
+          description: Unloads from feeding load per pen
+          items:
+            $ref: '#/components/schemas/UnloadExternalDTO'
+    FeedingLoadIngredientExternalDTO:
+      type: object
+      properties:
+        calculatedAmountKg:
+          type: number
+          description: Calculated amount of feed in feeding load (unit KG)
+          format: double
+          example: 780.0
+        feedName:
           type: string
-          description: if there is some textual comment for the value or just text, add it here
-          example: crude protein
-        unit:
+          description: Feed name
+          example: Alfalfa Meal, 17% CP
+        id:
+          type: integer
+          description: Loading ID
+          format: int64
+        loadedAmountKg:
+          type: number
+          description: Actual amount of ingredient in feeding load (unit KG)
+          format: double
+          example: 750.0
+    FeedingReportExternalDTO:
+      type: object
+      properties:
+        feedingLoads:
+          type: array
+          description: Feeding loads for given feeding
+          items:
+            $ref: '#/components/schemas/FeedingLoadExternalDTO'
+        feedingNumber:
+          type: integer
+          description: Feeding number enum value 1 = MORNING FEEDING , 2 = NOON FEEDING,
+            3 = EVENING FEEDING
+          format: int32
+          example: 1
+        id:
+          type: integer
+          description: Feeding ID
+          format: int64
+          example: 256
+        pens:
+          type: array
+          description: Pens included in feeding
+          items:
+            $ref: '#/components/schemas/PenExternalDTO'
+        status:
+          type: integer
+          description: Feeding status enum value 0 = TO DO , 1 = IN PROGRESS , 2 =
+            DONE
+          format: int32
+          example: 0
+    LoadingDetailsExternalDTO:
+      type: object
+      properties:
+        endDate:
           type: string
-          example: g/kg
-      additionalProperties: false
-      required: [key, value]
+          description: Loading finish date and time (UTC time)
+          example: 2020-11-06T09:35:53Z
+        ingredients:
+          type: array
+          description: Loaded ingredients in mixer wagon
+          items:
+            $ref: '#/components/schemas/FeedingLoadIngredientExternalDTO'
+        mixerWagon:
+          $ref: '#/components/schemas/MixerWagonExternalDTO'
+        startDate:
+          type: string
+          description: Loading start date and time (UTC time)
+          example: 2020-11-06T08:35:53Z
+    MixerWagonExternalDTO:
+      type: object
+      description: interesting enough to return this information? because it cannot be setted anywhere
+      properties:
+        id:
+          type: integer
+          description: Mixer wagon ID
+          format: int64
+          example: 478
+        imageUrl:
+          type: string
+          description: Mixer wagon image url
+        name:
+          type: string
+          description: Mixer wagon name
+          example: USA x 15
+        weight:
+          type: number
+          description: Loading start date and time (unit Tonnes)
+          format: double
+          example: 2.0
+    PenExternalDTO:
+      type: object
+      properties:
+        feedIntakePerAnimalKg:
+          type: number
+          description: Feed intake per animal (unit KG)
+          format: double
+        id:
+          type: integer
+          description: Pen ID
+          format: int64
+          example: 12
+        numberOfAnimals:
+          type: integer
+          description: Number of animals in pen
+          format: int32
+          example: 100
+        penName:
+          type: string
+          description: Pen name
+          example: Test pen
+    UnloadExternalDTO:
+      type: object
+      properties:
+        endDate:
+          type: string
+          description: Unloading finish date and time (UTC time)
+          example: 2020-11-06T09:35:53Z
+        id:
+          type: integer
+          description: Unload ID
+          format: int64
+          example: 5244
+        penId:
+          type: integer
+          description: Pen ID
+          format: int64
+          example: 68
+        startDate:
+          type: string
+          description: Unloading start date and time (UTC time)
+          example: 2020-11-06T08:35:53Z
+        status:
+          type: integer
+          description: Unloading status enum 0 = TO DO 1 = IN PROGRESS 2 = DONE
+          format: int32
+          example: 0
+        unloadedAmountKg:
+          type: number
+          description: Unloaded amount in pen from feeding load (unit KG)
+          format: double
+          example: 900.0
+    FeedingReport:
+      type: object
+      properties:
+        feedingDate:
+          type: string
+          description: 'Feeding date '
+          example: 2020-11-05
+        feedings:
+          type: array
+          description: Daily feedings for recipe
+          items:
+            $ref: '#/components/schemas/FeedingReportExternalDTO'
+        herdId:
+          type: integer
+          description: Herd ID
+          format: int64
+          example: 245
+        ration_id:
+          type: string
+          description: ration_id, should be unique between vendors, like UUID
+          example: 4bef73d1-f7f4-492e-a268-5f698a09cf4b
+        ration_name:
+          type: string
+          description: Ration name
+          example: high yield summer 23
 
   securitySchemes:
     bearerAuth:
