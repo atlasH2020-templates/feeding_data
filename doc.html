@@ -13,8 +13,8 @@
 <div class="header">
 ATLAS Service Template Specification
 Name                                                    feed_data
-Version                                                     0.0.1
-Author(s)                            J. V&ouml;lker (fodjan GmbH)
+Version                                                     0.0.3
+Author(s)             ? (MmmooOgle), J. V&ouml;lker (fodjan GmbH)
 </div>
 
 <h2>The "feed_data" ATLAS Service Template</h2>
@@ -25,7 +25,7 @@ This document describes the specification for the feed_data service whose purpos
 
 </div>
 <h2>1 Introduction</h2>
-Exchange planned and actual feeding is an important step to keep animals healthy, control the feedcosts and reduce environmental impact by increasing the precision of feeding.
+Exchange planned rations and actual feedingreports is an important step to keep animals healthy, control the feedcosts and reduce environmental impact by increasing the precision of feeding.
 
 This service provide endpoints to read the planned rations out of the system and write back actual feeded amounts.
 
@@ -46,24 +46,32 @@ The value of the system increases with extended feed-models which can calculate 
 <h2>4 Use Scenarios</h2>
 
 There are two usage scenarios:
-- Read planned rations to export them to feed-wagons
-- Write back actual feedings into the system
-- Read detailed evaluation information about the ration to build reports, e.g. about overal costs and environmental impact of the feeding on a farm
+- Send planned rations to service and over the service-owner to feed-wagons
+- Read actual feedingreports into the system
 
 <h2>5 Service Template API Overview</h2>
 
-3 Endpoints:
+2 Endpoints:
 
-- GET /rations: returns all planned or actual fed rations for a given date
-- GET /rations/{id}: return one single ration with extended evaluation and feedstuff-nutrients
-- POST /rations/{id}/feeding: Actual fed rations can be send back to the software
+- POST /ration: send a ration to the system
+- GET /feedingreport: return all feedingreports in the given time range
 
 <h2>6 Data Formats</h2>
 
-There are 2 different main data-formats used by this template:
+The following data model describes the 3 main entities and how they interact with the service animal_data.
 
-- Rations without evaluation and nutrients for exports to feed-wagons
-- Single rations with evaluation and nutrients for reports
+<img src="doc/atlas feedingmodel datamodel.png" style="width:450px" />
+
+<h3>Ration</h3>
+A ration is planned for a certain date and calculated for a single cow per day. This comes mostly out of ration calculation software and is used as starting point to programm a mixer wagon. There might be other entities like a pen included to calculate the real amount per group and per feeding.
+
+<h3>Feedstuff</h3>
+A feedstuff is a single component for a ration like grassilage or corn.
+
+<h3>FeedingReport</h3>
+This is the record from an actual feeding. It includes several entities:
+- loadings: which amount of feedstuffs are really loaded and mixed compared to the planned ration
+- unloadings: each ration might be planned for multiple pens. the unloadings describe how much of the mix was unloaded at which pen. also here compare plan and actual amounts.
 
 <h2>7 Access and Authentication</h2>
 
@@ -75,7 +83,7 @@ Some of the information held by animal_data services are considered to be sensit
 
 <h2>8 Dynamic Behaviour</h2>
 
-There is no dynamic behaviour in this template.
+When a ration is send to the service there might be feedingreports when this ration is actually used some days later available at the feedingreports endpoint.
 
 </body>
 </html>
