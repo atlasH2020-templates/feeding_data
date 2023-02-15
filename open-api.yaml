@@ -229,11 +229,6 @@ components:
           description: List of loadings per day
           items:
             $ref: '#/components/schemas/Loadings'
-        unloadings:
-          type: array
-          description: List of unloadings per day
-          items:
-            $ref: '#/components/schemas/Unloadings'
         rationId:
           type: string
           description: RationId represent identification number of ration between systems
@@ -271,6 +266,11 @@ components:
           description: Unloaded amount in pen from feeding load (unit KG)
           format: double
           example: 900
+        calculatedAmountKg:
+          type: number
+          description: Calculated amount of feed in feeding load (unit KG)
+          format: double
+          example: 780
     Loadings:
       title: Loadings
       type: object
@@ -290,6 +290,11 @@ components:
           description: List of ingredients
           items:
             $ref: '#/components/schemas/Ingredients'
+        unloadings:
+          type: array
+          description: List of unloadings per day
+          items:
+            $ref: '#/components/schemas/Unloadings'
     Ingredients:
       title: Ingredients
       type: object
