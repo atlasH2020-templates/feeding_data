@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: MmmooOgle Feed API
-  description: MmmooOgle Feed swagger API documentation
+  title: ATLAS feeding_data
+  description: Send planned rations and get actual feeding reports into the system.
   contact: {}
   license: {}
   version: '1'
@@ -9,33 +9,35 @@ servers:
   - url: http://localhost:8080
     description: Inferred Url
 tags:
-  - name: report-external-applications-controller
-    description: Report External Applications Controller
+  - name: report-applications-controller
+    description: Report Controller
 paths:
-  /api/v1/external/feedingreeport:
+  /api/v1/feedingreport:
     get:
       tags:
-        - report-external-applications-controller
+        - report-applications-controller
       summary: feedingReport
       operationId: feedingReportUsingGET
       parameters:
         - name: start_date
           in: query
-          description: start_date
+          description: Start date from when to fetch data
           required: true
           style: form
           schema:
             type: string
+            format: YYYY-MM-DD
         - name: end_date
           in: query
-          description: end_date
+          description: End date from when to fetch data
           required: true
           style: form
           schema:
             type: string
-        - name: external_ration_id
+            format: YYYY-MM-DD
+        - name: ration_id
           in: query
-          description: external_ration_id
+          description: RationId represents identification for connecting the rations between systems
           required: true
           style: form
           schema:
@@ -49,7 +51,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RecipeDailyReportExternalDTO'
+                  $ref: '#/components/schemas/RecipeDailyReport'
         '401':
           description: Unauthorized
         '403':
@@ -57,21 +59,54 @@ paths:
         '404':
           description: Not Found
       security:
-        - Static token:
+        - StaticToken:
             - global
-  /api/v1/external/ration:
+  /api/v1/pens:
+    get:
+      tags:
+        - report-applications-controller
+      summary: pens
+      operationId: pensUsingGET
+      parameters:
+        - name: barn_id
+          in: query
+          description: Id of a barn for identifying which pens to send back
+          required: true
+          style: form
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pen'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      security:
+        - StaticToken:
+            - global
+  /api/v1/ration:
     post:
       tags:
-        - report-external-applications-controller
-      summary: importExternalRation
-      operationId: importExternalRationUsingPOST
+        - report-applications-controller
+      summary: importRation
+      operationId: importRationUsingPOST
       requestBody:
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ExternalRationRequestDTO'
+                $ref: '#/components/schemas/RationRequest'
       responses:
         '200':
           description: OK
@@ -88,55 +123,54 @@ paths:
         '404':
           description: Not Found
       security:
-        - Static token:
+        - StaticToken:
             - global
 components:
   schemas:
-    ExternalRationIngredientRequestDTO:
-      title: ExternalRationIngredientRequestDTO
+    RationFeedstuffRequest:
+      title: RationFeedstuffRequest
       type: object
       properties:
         amountAsFed:
           type: number
-          description: Amount as fed of ingredient in ration
+          description: Amount as fed (fresh matter amount) of feedstuff in ration
           format: double
         amountDm:
           type: number
-          description: Amount DM of ingredient in ration
+          description: Amount DM of feedstuff in ration
           format: double
         costAsFed:
           type: number
-          description: Cost of amount as fed of ingredient in ration
+          description: Cost of amount as fed of feedstuff in ration
           format: double
         costDm:
           type: number
-          description: Cost DM of ration ingredient
+          description: Cost DM per kg of ration feedstuff
           format: double
           example: 41.25
         dm:
           type: number
-          description: DM percentage of ration ingredient
+          description: DM percentage of ration feedstuff
           format: double
-        externalId:
-          type: integer
-          description: ExternalId represent identification number of ration ingredient between systems
-          format: int64
-          example: 965
+        ingredientId:
+          type: string
+          description: IngredientId represent identification number of ration feedstuff between systems
+          example: 49c78036-acfb-11ed-afa1-0242ac120002
         feedName:
           type: string
-          description: Name of ration ingredient
+          description: Name of ration feedstuff
           example: Sojabohnen (gesch., Bioprofin)
         feedType:
           type: string
-          description: Feed type of ingredient in ration
+          description: Feed type of feedstuff in ration
           example: Dry forage,Corn silage,Alfalfa silage, Grass silage, Other wet forage, By-productGrain ,Fatty acid source ,Triglycerides, Cp source, Rup source, Minerals, Miscellaneous, Vitamin, Premix, Forage, Concentrate, Commercial
         orderNumber:
           type: integer
-          description: Order of ingredient in ration witch will be used as order of ingredient in mixer wagon
+          description: Order of feedstuff in ration witch will be used as order of feedstuff in mixer wagon
           format: int32
           example: 0
-    ExternalRationRequestDTO:
-      title: ExternalRationRequestDTO
+    RationRequest:
+      title: RationRequest
       type: object
       properties:
         costDm:
@@ -146,156 +180,26 @@ components:
           example: 80.2
         dm:
           type: number
-          description: DM (Dry meter) percentage of ration
+          description: DM (Dry matter) percentage of ration
           format: double
-        externalId:
-          type: integer
-          description: ExternalId represent identification number of ration between systems
-          example: '856'
-        rationIngredients:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExternalRationIngredientRequestDTO'
-        rationName:
+        ingredientId:
           type: string
-          description: External ration name
-          example: Ration Test 1
-    FeedingLoadExternalDTO:
-      title: FeedingLoadExternalDTO
-      type: object
-      properties:
-        actualLoadedAmountKg:
-          type: number
-          description: Actual amount loaded in mixer wagon (unit = KG)
-          format: double
-          example: 1980
-        amountPerLoadKg:
-          type: number
-          description: Amount that should be loaded in mixer wagon (unit = KG)
-          format: double
-          example: 2000
-        id:
-          type: integer
-          description: Feeding load ID
-          format: int64
-          example: 452
-        loadDetails:
-          description: Loading details
-          $ref: '#/components/schemas/LoadingDetailsExternalDTO'
-        loadPosition:
-          type: integer
-          description: Feeding load position used for ordering feeding loads
-          format: int64
-          example: 0
-        status:
-          type: integer
-          description: 'Feeding load status enum 0 = TO DO, 1 = IN PROGRESS , 2 = DONE '
-          format: int32
-          example: 0
-        unloads:
+          description: IngredientId represent identification number of ration between systems
+          example: 62559890-acfb-11ed-afa1-0242ac120002
+        rationFeedstuffs:
           type: array
-          description: Unloads from feeding load per pen
           items:
-            $ref: '#/components/schemas/UnloadExternalDTO'
-    FeedingLoadIngredientExternalDTO:
-      title: FeedingLoadIngredientExternalDTO
-      type: object
-      properties:
-        calculatedAmountKg:
-          type: number
-          description: Calculated amount of feed in feeding load (unit KG)
-          format: double
-          example: 780
-        feedId:
-          type: integer
-          description: Feed ID
-          format: int64
-          example: 254
-        feedName:
-          type: string
-          description: Feed name
-          example: Alfalfa Meal, 17% CP
-        id:
-          type: integer
-          description: Loading ID
-          format: int64
-        loadedAmountKg:
-          type: number
-          description: Actual amount of ingredient in feeding load (unit KG)
-          format: double
-          example: 750
-    FeedingReportExternalDTO:
-      title: FeedingReportExternalDTO
-      type: object
-      properties:
-        feedingLoads:
-          type: array
-          description: Feeding loads for given feeding
-          items:
-            $ref: '#/components/schemas/FeedingLoadExternalDTO'
-        feedingNumber:
-          type: integer
-          description: Feeding number enum value 1 = MORNING FEEDING , 2 = NOON FEEDING, 3 = EVENING FEEDING
-          format: int64
-          example: 1
-        id:
-          type: integer
-          description: Feeding ID
-          format: int64
-          example: 256
+            $ref: '#/components/schemas/RationFeedstuffRequest'
         pens:
           type: array
-          description: Pens included in feeding
           items:
-            $ref: '#/components/schemas/PenExternalDTO'
-        status:
-          type: integer
-          description: Feeding status enum value 0 = TO DO , 1 = IN PROGRESS , 2 = DONE
-          format: int32
-          example: 0
-    LoadingDetailsExternalDTO:
-      title: LoadingDetailsExternalDTO
-      type: object
-      properties:
-        endDate:
+            $ref: '#/components/schemas/Pen'
+        rationName:
           type: string
-          description: Loading finish date and time (UTC time)
-          example: '2020-11-06T09:35:53Z'
-        ingredients:
-          type: array
-          description: Loaded ingredients in mixer wagon
-          items:
-            $ref: '#/components/schemas/FeedingLoadIngredientExternalDTO'
-        mixerWagon:
-          description: Mixer wagon used for loading
-          $ref: '#/components/schemas/MixerWagonExternalDTO'
-        startDate:
-          type: string
-          description: Loading start date and time (UTC time)
-          example: '2020-11-06T08:35:53Z'
-    MixerWagonExternalDTO:
-      title: MixerWagonExternalDTO
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Mixer wagon ID
-          format: int64
-          example: 478
-        imageUrl:
-          type: string
-          description: Mixer wagon image url
-        name:
-          type: string
-          description: Mixer wagon name
-          example: USA x 15
-        weight:
-          type: number
-          description: Loading start date and time (unit Tonnes)
-          format: double
-          example: 2
-    PenExternalDTO:
-      title: PenExternalDTO
+          description: Ration name
+          example: Ration Test 1
+    Pen:
+      title: Pen
       type: object
       properties:
         feedIntakePerAnimalKg:
@@ -316,81 +220,96 @@ components:
           type: string
           description: Pen name
           example: Test pen
-    RecipeDailyReportExternalDTO:
-      title: RecipeDailyReportExternalDTO
+    RecipeDailyReport:
+      title: RecipeDailyReport
       type: object
       properties:
-        feedingDate:
-          type: string
-          description: 'Feeding date '
-          example: '2020-11-05'
-        feedings:
+        loadings:
           type: array
-          description: Daily feedings for recipe
+          description: List of loadings per day
           items:
-            $ref: '#/components/schemas/FeedingReportExternalDTO'
-        herdId:
-          type: integer
-          description: Herd ID
-          format: int64
-          example: 245
-        rationExternalId:
-          type: integer
-          description: ExternalId represent identification number of ration between systems
-          format: int64
-          example: 41933
-        rationName:
+            $ref: '#/components/schemas/Loadings'
+        unloadings:
+          type: array
+          description: List of unloadings per day
+          items:
+            $ref: '#/components/schemas/Unloadings'
+        rationId:
           type: string
-          description: Ration name
-          example: Test ration
-        recipeId:
-          type: integer
-          description: Recipe ID
-          format: int64
-          example: 421
-        recipeName:
-          type: string
-          description: Recipe name
-          example: Test recipe
-        teamId:
-          type: integer
-          description: Team ID
-          format: int64
-          example: 542
-    UnloadExternalDTO:
-      title: UnloadExternalDTO
+          description: RationId represent identification number of ration between systems
+          example: 40ac1b42-acfb-11ed-afa1-0242ac120002
+    Unloadings:
+      title: Unloadings
       type: object
       properties:
+        startDate:
+          type: string
+          description: Unloading start date and time (UTC time)
+          example: '2020-11-06T08:35:53Z'
+          format: date-time
         endDate:
           type: string
           description: Unloading finish date and time (UTC time)
           example: '2020-11-06T09:35:53Z'
-        id:
-          type: integer
-          description: Unload ID
-          format: int64
-          example: 5244
+          format: date-time
         penId:
           type: integer
           description: Pen ID
           format: int64
           example: 68
-        startDate:
-          type: string
-          description: Unloading start date and time (UTC time)
-          example: '2020-11-06T08:35:53Z'
-        status:
+        penNumberOfAnimals:
           type: integer
-          description: Unloading status enum 0 = TO DO 1 = IN PROGRESS 2 = DONE
-          format: int32
-          example: 0
+          description: Number of animals in the pen
+          format: int64
+          example: 100
+        penName:
+          type: string
+          description: Name of the used pen
+          example: Test
         unloadedAmountKg:
           type: number
           description: Unloaded amount in pen from feeding load (unit KG)
           format: double
           example: 900
+    Loadings:
+      title: Loadings
+      type: object
+      properties: 
+        startDate:
+          type: string
+          description: Loading start date and time (UTC time)
+          example: '2020-11-06T08:35:53Z'
+          format: date-time
+        endDate:
+          type: string
+          description: Loading finish date and time (UTC time)
+          example: '2020-11-06T09:35:53Z'
+          format: date-time
+        ingredients:
+          type: array
+          description: List of ingredients
+          items:
+            $ref: '#/components/schemas/Ingredients'
+    Ingredients:
+      title: Ingredients
+      type: object
+      properties:
+        calculatedAmountKg:
+          type: number
+          description: Calculated amount of feed in feeding load (unit KG)
+          format: double
+          example: 780
+        feedId:
+          type: string
+          description: Ingredient id
+          example: f627dfc6-ad03-11ed-afa1-0242ac120002
+        loadedAmountKg:
+          type: number
+          description: Actual amount of feedstuff in feeding load (unit KG)
+          format: double
+          example: 750
   securitySchemes:
-    Static token:
+    StaticToken:
       type: apiKey
       name: Static token
       in: header
