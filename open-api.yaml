@@ -85,7 +85,7 @@ components:
       title: RationFeedstuffRequest
       type: object
       properties:
-        amound_drymatter:
+        amount_drymatter:
           type: number
           description: Amount DM of feedstuff in ration
           format: double
