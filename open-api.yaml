@@ -2,47 +2,36 @@ openapi: 3.0.3
 info:
   title: ATLAS feeding_data
   description: Send planned rations and get actual feeding reports into the system.
-  contact: {}
-  license: {}
-  version: '1'
+  version: '0.0.2'
 servers:
   - url: http://localhost:8080
     description: Inferred Url
-tags:
-  - name: report-applications-controller
-    description: Report Controller
+security: 
+  - "bearerAuth": []
 paths:
-  /api/v1/feedingreport:
+  /feedingreport:
     get:
-      tags:
-        - report-applications-controller
       summary: feedingReport
-      operationId: feedingReportUsingGET
       parameters:
         - name: start_date
           in: query
-          description: Start date from when to fetch data
+          description: Start date from when to fetch data, ISO8601 date
           required: true
-          style: form
           schema:
             type: string
-            format: YYYY-MM-DD
+            format: date
         - name: end_date
           in: query
-          description: End date from when to fetch data
+          description: End date from when to fetch data, ISO8601 date
           required: true
-          style: form
           schema:
             type: string
-            format: YYYY-MM-DD
-        - name: ration_id
+            format: date
+        - name: ration_ref
           in: query
-          description: RationId represents identification for connecting the rations between systems
-          required: true
-          style: form
+          description: ration_ref represents identification for connecting the rations between systems
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
           description: OK
@@ -58,48 +47,9 @@ paths:
           description: Forbidden
         '404':
           description: Not Found
-      security:
-        - StaticToken:
-            - global
-  /api/v1/pens:
-    get:
-      tags:
-        - report-applications-controller
-      summary: pens
-      operationId: pensUsingGET
-      parameters:
-        - name: barn_id
-          in: query
-          description: Id of a barn for identifying which pens to send back
-          required: true
-          style: form
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pen'
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '404':
-          description: Not Found
-      security:
-        - StaticToken:
-            - global
-  /api/v1/ration:
+  /ration:
     post:
-      tags:
-        - report-applications-controller
       summary: importRation
-      operationId: importRationUsingPOST
       requestBody:
         content:
           application/json:
@@ -122,104 +72,110 @@ paths:
           description: Forbidden
         '404':
           description: Not Found
-      security:
-        - StaticToken:
-            - global
+        '409':
+          description: Validation failed
 components:
   schemas:
+    URN:
+        type: "string"
+        pattern: "^urn:[a-z][a-z0-9_.\\-]*:[\\w-.]+"
+        description: "Uniform resource name of a field with the syntax `urn:<service_id>:<internal_id>`. <service_id> must be the id of a valid and active ATLAS service"
+        example: 'urn:animal_data:69d4a4ec-e8a4-4768-a299-14a7a9acd1b1'
     RationFeedstuffRequest:
       title: RationFeedstuffRequest
       type: object
       properties:
-        amountAsFed:
-          type: number
-          description: Amount as fed (fresh matter amount) of feedstuff in ration
-          format: double
-        amountDm:
+        amound_drymatter:
           type: number
           description: Amount DM of feedstuff in ration
           format: double
-        costAsFed:
-          type: number
-          description: Cost of amount as fed of feedstuff in ration
-          format: double
-        costDm:
+        cost_kg_drymatter:
           type: number
           description: Cost DM per kg of ration feedstuff
           format: double
-          example: 41.25
-        dm:
+          example: 0.4125
+        drymatter_percentage:
           type: number
           description: DM percentage of ration feedstuff
           format: double
-        ingredientId:
+        feedstuff_id:
           type: string
-          description: IngredientId represent identification number of ration feedstuff between systems
+          description: feedstuff_id represent identification number of ration feedstuff between systems
           example: 49c78036-acfb-11ed-afa1-0242ac120002
-        feedName:
+        name:
           type: string
           description: Name of ration feedstuff
           example: Sojabohnen (gesch., Bioprofin)
-        feedType:
+        type:
           type: string
-          description: Feed type of feedstuff in ration
-          example: Dry forage,Corn silage,Alfalfa silage, Grass silage, Other wet forage, By-productGrain ,Fatty acid source ,Triglycerides, Cp source, Rup source, Minerals, Miscellaneous, Vitamin, Premix, Forage, Concentrate, Commercial
-        orderNumber:
-          type: integer
-          description: Order of feedstuff in ration witch will be used as order of feedstuff in mixer wagon
-          format: int32
-          example: 0
+          description: Feed type of feedstuff in ration, todo check completeness
+          enum: 
+            - Dry forage
+            - Corn silage
+            - Alfalfa silage
+            - Grass silage
+            - Other wet forage
+            - By-productGrain
+            - Fatty acid source
+            - Triglycerides
+            - Cp source
+            - Rup source
+            - Minerals
+            - Miscellaneous
+            - Vitamin
+            - Premix
+            - Forage
+            - Concentrate
+            - Commercial
+            - Water
+          example: Dry forage
+      required:
+        - amount_drymatter
+        - drymatter_percentage
+        - feedstuff_id
+        - name
+        - type
     RationRequest:
       title: RationRequest
       type: object
       properties:
-        costDm:
-          type: number
-          description: Cost of DM per KG
-          format: double
-          example: 80.2
-        dm:
-          type: number
-          description: DM (Dry matter) percentage of ration
-          format: double
-        ingredientId:
+        ration_ref:
           type: string
-          description: IngredientId represent identification number of ration between systems
+          description: client-supplied reference to that ration. If ration_ref is not provided, new ration will be created. If ration_ref is already known, existing ration will be updated.
           example: 62559890-acfb-11ed-afa1-0242ac120002
-        rationFeedstuffs:
+        feedstuffs:
           type: array
+          description: Order of feedstuff in this array will be used as order of feedstuff in mixer wagon
           items:
             $ref: '#/components/schemas/RationFeedstuffRequest'
-        pens:
+        pen_allocations:
           type: array
           items:
-            $ref: '#/components/schemas/Pen'
-        rationName:
+            $ref: '#/components/schemas/PenAllocation'
+        name:
           type: string
           description: Ration name
           example: Ration Test 1
-    Pen:
+        start_date: 
+          type: string
+          format: date
+          description: Start date of ration, as ISO8601 date
+      required:
+        - feedstuffs
+        - pens
+        - name
+    PenAllocation:
       title: Pen
       type: object
+      description: Describes which pen get how much freshmass per animal. Use the number of animals from the animal_data GET /pens interface
       properties:
-        feedIntakePerAnimalKg:
+        feed_intake_per_animal:
           type: number
-          description: Feed intake per animal (unit KG)
+          description: Feed intake per animal in freshmass kg per day
           format: double
-        id:
-          type: integer
-          description: Pen ID
-          format: int64
-          example: 12
-        numberOfAnimals:
-          type: integer
-          description: Number of animals in pen
-          format: int32
-          example: 100
-        penName:
-          type: string
-          description: Pen name
-          example: Test pen
+          example: 31.5
+        urn:
+          $ref: "#/components/schemas/URN"
     RecipeDailyReport:
       title: RecipeDailyReport
       type: object
@@ -229,92 +185,85 @@ components:
           description: List of loadings per day
           items:
             $ref: '#/components/schemas/Loadings'
-        rationId:
+        ration_ref:
           type: string
-          description: RationId represent identification number of ration between systems
+          description: ration_ref represent identification of ration between systems
           example: 40ac1b42-acfb-11ed-afa1-0242ac120002
     Unloadings:
       title: Unloadings
       type: object
       properties:
-        startDate:
+        start_date:
           type: string
           description: Unloading start date and time (UTC time)
           example: '2020-11-06T08:35:53Z'
           format: date-time
-        endDate:
+        end_date:
           type: string
           description: Unloading finish date and time (UTC time)
           example: '2020-11-06T09:35:53Z'
           format: date-time
-        penId:
+        pen_urn:
+          $ref: "#/components/schemas/URN"
+        corrected_number_of_animals:
           type: integer
-          description: Pen ID
+          description: Number of animals in the pen. Can be corrected by the user for that single feeding
           format: int64
-          example: 68
-        penNumberOfAnimals:
-          type: integer
-          description: Number of animals in the pen
-          format: int64
-          example: 100
-        penName:
-          type: string
-          description: Name of the used pen
-          example: Test
-        unloadedAmountKg:
+          example: 62
+        unloaded_amount_kg:
           type: number
-          description: Unloaded amount in pen from feeding load (unit KG)
+          description: Unloaded amount in this pen from feeding load in kg freshmass for this unloading
           format: double
           example: 900
-        calculatedAmountKg:
+        calculated_amount_kg:
           type: number
-          description: Calculated amount of feed in feeding load (unit KG)
+          description: Calculated amount of feed in feeding load in kg freshmass for this unloading
           format: double
-          example: 780
+          example: 870
     Loadings:
       title: Loadings
       type: object
       properties: 
-        startDate:
+        start_date:
           type: string
           description: Loading start date and time (UTC time)
           example: '2020-11-06T08:35:53Z'
           format: date-time
-        endDate:
+        end_date:
           type: string
           description: Loading finish date and time (UTC time)
           example: '2020-11-06T09:35:53Z'
           format: date-time
-        ingredients:
+        feedstuffs:
           type: array
-          description: List of ingredients
+          description: List of feedstuffs loaded into feedwagon
           items:
-            $ref: '#/components/schemas/Ingredients'
+            $ref: '#/components/schemas/FeedstuffsLoading'
         unloadings:
           type: array
           description: List of unloadings per day
           items:
             $ref: '#/components/schemas/Unloadings'
-    Ingredients:
+    FeedstuffsLoading:
       title: Ingredients
       type: object
       properties:
-        calculatedAmountKg:
+        calculated_amount_kg:
           type: number
-          description: Calculated amount of feed in feeding load (unit KG)
+          description: Calculated amount of feed in feeding load in kg freshmass
           format: double
           example: 780
-        feedId:
+        feedstuff_id:
           type: string
-          description: Ingredient id
+          description: feedstuff id, same as in ration feedstuffs
           example: f627dfc6-ad03-11ed-afa1-0242ac120002
-        loadedAmountKg:
+        loaded_amount_kg:
           type: number
-          description: Actual amount of feedstuff in feeding load (unit KG)
+          description: Actual amount of feedstuff in feeding load in kg freshmass
           format: double
           example: 750
   securitySchemes:
-    StaticToken:
-      type: apiKey
-      name: Static token
-      in: header
+    bearerAuth: 
+      type: "http"
+      scheme: "bearer"
+      
