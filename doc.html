@@ -85,5 +85,34 @@ Some of the information held by animal_data services are considered to be sensit
 
 When a ration is send to the service there might be feedingreports when this ration is actually used some days later available at the feedingreports endpoint.
 
+<h3>Calculations</h3>
+
+The amount values in the ration are calculated to actual loading and unloading amounts in the following way:
+
+```
+// 1. Calculate freshmass sum of total loading by sum up the Pens:
+total_loading_amount = sum(pens[].feedIntakePerAnimalKg * pens[].numberOfAnimals)
+
+// 2. Calculate freshmass sum of ration advice
+total_ration_amount = sum(rationFeedstuffs[].amountAsFed)
+
+// 3. Scale up each single feedstuff with the total loading-amount
+loading.ingredients[].calculatedAmountKg = rationFeedstuffs[].amountAsFed / total_ration_amount * total_loading_amount
+
+// 4. Unloading-amounts are just used from the pens list
+unloadings[].calculatedAmountKg = pens[].feedIntakePerAnimal * pens[].numberOfAnimals
+
+```
+
+<h3>Validation</h3>
+<h4>Pen Usage</h4>
+The service has to validate, that a pen is not assigned to two rations in parallel in one query.
+
+- If a pen is already used in another ration of the same body, the service will responde with a 409 status.
+- If a pen is already used in a earlier request, than it is deleted in the prior ration and added only to the new one.
+
+<h4>Usage of ration_ref</h4>
+Use of same ration_ref will override the existing ration with the same ref.
+
 </body>
 </html>
