@@ -11,7 +11,7 @@ security:
 paths:
   /feedingreport:
     get:
-      summary: feedingReport
+      summary: Retrieve feeding report
       parameters:
         - name: start_date
           in: query
@@ -29,7 +29,7 @@ paths:
             format: date
         - name: ration_ref
           in: query
-          description: ration_ref represents identification for connecting the rations between systems
+          description: ration_ref is an optional identifier to connect rations between different systems
           schema:
             type: string
       responses:
@@ -58,14 +58,12 @@ paths:
               items:
                 $ref: '#/components/schemas/RationRequest'
       responses:
-        '200':
-          description: OK
+        '204':
+          description: Successful import
           content:
             application/json:
               schema:
                 type: object
-        '201':
-          description: Created
         '401':
           description: Unauthorized
         '403':
@@ -79,15 +77,15 @@ components:
     URN:
         type: "string"
         pattern: "^urn:[a-z][a-z0-9_.\\-]*:[\\w-.]+"
-        description: "Uniform resource name of a field with the syntax `urn:<service_id>:<internal_id>`. <service_id> must be the id of a valid and active ATLAS service"
-        example: 'urn:animal_data:69d4a4ec-e8a4-4768-a299-14a7a9acd1b1'
+        description: "Uniform resource name of a pen with the syntax `urn:<service_id>:<internal_id>`. <service_id> must be the id of a valid and active ATLAS service"
+        example: 'urn:de.fodjan.animal_data:69d4a4ec-e8a4-4768-a299-14a7a9acd1b1'
     RationFeedstuffRequest:
       title: RationFeedstuffRequest
       type: object
       properties:
         amount_drymatter:
           type: number
-          description: Amount DM of feedstuff in ration
+          description: Amount of DM feedstuff in ration (kg)
           format: double
         cost_kg_drymatter:
           type: number
@@ -110,25 +108,26 @@ components:
           type: string
           description: Feed type of feedstuff in ration, todo check completeness
           enum: 
-            - Dry forage
-            - Corn silage
-            - Alfalfa silage
-            - Grass silage
-            - Other wet forage
-            - By-productGrain
-            - Fatty acid source
-            - Triglycerides
-            - Cp source
-            - Rup source
-            - Minerals
-            - Miscellaneous
-            - Vitamin
-            - Premix
-            - Forage
-            - Concentrate
-            - Commercial
-            - Water
-          example: Dry forage
+            - dry_forage
+            - corn_silage
+            - alfa_silage
+            - grass_silage
+            - other_wet_forage
+            - by_product
+            - grain
+            - fatty_acid_source
+            - triglycerides
+            - cp_source
+            - rup_source
+            - mineral
+            - miscellaneous
+            - vitamin
+            - premix
+            - forage
+            - concentrate
+            - commercial
+            - water
+          example: dry_forage
       required:
         - amount_drymatter
         - drymatter_percentage
@@ -141,7 +140,7 @@ components:
       properties:
         ration_ref:
           type: string
-          description: client-supplied reference to that ration. If ration_ref is not provided, new ration will be created. If ration_ref is already known, existing ration will be updated.
+          description: client-supplied reference for that ration. If ration_ref is not provided, new ration will be created. If ration_ref is already known, existing ration will be updated.
           example: 62559890-acfb-11ed-afa1-0242ac120002
         feedstuffs:
           type: array
@@ -184,13 +183,13 @@ components:
           type: array
           description: List of loadings per day
           items:
-            $ref: '#/components/schemas/Loadings'
+            $ref: '#/components/schemas/Loading'
         ration_ref:
           type: string
-          description: ration_ref represent identification of ration between systems
+          description: ration_ref is an optional identifier to connect rations between different systems
           example: 40ac1b42-acfb-11ed-afa1-0242ac120002
-    Unloadings:
-      title: Unloadings
+    Unloading:
+      title: Unloading
       type: object
       properties:
         start_date:
@@ -220,8 +219,8 @@ components:
           description: Calculated amount of feed in feeding load in kg freshmass for this unloading
           format: double
           example: 870
-    Loadings:
-      title: Loadings
+    Loading:
+      title: Loading
       type: object
       properties: 
         start_date:
@@ -243,7 +242,7 @@ components:
           type: array
           description: List of unloadings per day
           items:
-            $ref: '#/components/schemas/Unloadings'
+            $ref: '#/components/schemas/Unloading'
     FeedstuffsLoading:
       title: Ingredients
       type: object

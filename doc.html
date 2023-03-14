@@ -49,6 +49,10 @@ There are two usage scenarios:
 - Send planned rations to service and over the service-owner to feed-wagons
 - Read actual feedingreports into the system
 
+The following data model describes the 3 main entities and how they interact with the service animal_data.
+
+<img src="doc/atlas feedingmodel datamodel.png" style="width:450px" />
+
 <h2>5 Service Template API Overview</h2>
 
 2 Endpoints:
@@ -58,12 +62,8 @@ There are two usage scenarios:
 
 <h2>6 Data Formats</h2>
 
-The following data model describes the 3 main entities and how they interact with the service animal_data.
-
-<img src="doc/atlas feedingmodel datamodel.png" style="width:450px" />
-
 <h3>Ration</h3>
-A ration is planned for a certain date and calculated for a single cow per day. This comes mostly out of ration calculation software and is used as starting point to programm a mixer wagon. There might be other entities like a pen included to calculate the real amount per group and per feeding.
+A ration is planned for a certain date and calculated for a single animal per day. This comes mostly out of ration calculation software and is used as starting point to program a mixer wagon. There might be other entities like a pen included to calculate the real amount per group and per feeding.
 
 <h3>Feedstuff</h3>
 A feedstuff is a single component for a ration like grassilage or corn.
@@ -87,7 +87,7 @@ When a ration is send to the service there might be feedingreports when this rat
 
 <h3>Calculations</h3>
 
-The amount values in the ration are calculated to actual loading and unloading amounts in the following way:
+The amount values in the ration are calculated to actual loading and unloading amounts typically in the following way:
 
 ```
 // 1. Calculate freshmass sum of total loading by sum up the Pens:
@@ -106,9 +106,9 @@ unloadings[].calculatedAmountKg = pens[].feedIntakePerAnimal * pens[].numberOfAn
 
 <h3>Validation</h3>
 <h4>Pen Usage</h4>
-The service has to validate, that a pen is not assigned to two rations in parallel in one query.
+The service has to validate, that a pen is not assigned to more than one ration in parallel in one query.
 
-- If a pen is already used in another ration of the same body, the service will responde with a 409 status.
+- If a pen is already used in another ration of the same body, the service will respond with a 409 status.
 - If a pen is already used in a earlier request, than it is deleted in the prior ration and added only to the new one.
 
 <h4>Usage of ration_ref</h4>
