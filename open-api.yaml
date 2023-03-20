@@ -54,9 +54,7 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RationRequest'
+              $ref: '#/components/schemas/RationRequest'
       responses:
         '204':
           description: Successful import
@@ -64,14 +62,14 @@ paths:
             application/json:
               schema:
                 type: object
+        '400':
+          description: Bad request
         '401':
           description: Unauthorized
         '403':
           description: Forbidden
         '404':
           description: Not Found
-        '409':
-          description: Validation failed
 components:
   schemas:
     URN:
@@ -83,19 +81,20 @@ components:
       title: RationFeedstuffRequest
       type: object
       properties:
-        amount_drymatter:
+        amount_freshmatter:
           type: number
-          description: Amount of DM feedstuff in ration (kg)
+          description: Fresh matter amount of feedstuff in ration (kg)
           format: double
-        cost_kg_drymatter:
+        cost_kg_freshmatter:
           type: number
-          description: Cost DM per kg of ration feedstuff
+          description: Fresh matter cost per kg of ration feedstuff (USD)
           format: double
           example: 0.4125
         drymatter_percentage:
           type: number
           description: DM percentage of ration feedstuff
           format: double
+          example: 0.55
         feedstuff_id:
           type: string
           description: feedstuff_id represent identification number of ration feedstuff between systems
@@ -181,7 +180,7 @@ components:
       properties:
         loadings:
           type: array
-          description: List of loadings per day
+          description: List of all loadings per day
           items:
             $ref: '#/components/schemas/Loading'
         ration_ref:
@@ -214,11 +213,6 @@ components:
           description: Unloaded amount in this pen from feeding load in kg freshmass for this unloading
           format: double
           example: 900
-        calculated_amount_kg:
-          type: number
-          description: Calculated amount of feed in feeding load in kg freshmass for this unloading
-          format: double
-          example: 870
     Loading:
       title: Loading
       type: object
