@@ -90,18 +90,11 @@ When a ration is send to the service there might be feedingreports when this rat
 The amount values in the ration are calculated to actual loading and unloading amounts typically in the following way:
 
 ```
-// 1. Calculate freshmass sum of total loading by sum up the Pens:
-total_loading_amount = sum(pens[].feedIntakePerAnimalKg * pens[].numberOfAnimals)
+// 1. Calculate freshmass sum of ration advice
+total_ration_freshmatter_amount = sum(RATION.feedstuffs[].amount_freshmatter)
 
-// 2. Calculate freshmass sum of ration advice
-total_ration_amount = sum(rationFeedstuffs[].amountAsFed)
-
-// 3. Scale up each single feedstuff with the total loading-amount
-loading.ingredients[].calculatedAmountKg = rationFeedstuffs[].amountAsFed / total_ration_amount * total_loading_amount
-
-// 4. Unloading-amounts are just used from the pens list
-unloadings[].calculatedAmountKg = pens[].feedIntakePerAnimal * pens[].numberOfAnimals
-
+// 2. Scale up each single feedstuff with the total loading-amount
+loadings[].feedstuffs[].calculated_amount_kg = RATION.feedstuffs[].amount_freshmatter / total_ration_freshmatter_amount * INTERNAL.loadings[].total_loading_amount * INTERNAL.other-correction-factors
 ```
 
 <h3>Validation</h3>

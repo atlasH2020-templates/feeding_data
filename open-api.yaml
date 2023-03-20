@@ -94,7 +94,7 @@ components:
           type: number
           description: DM percentage of ration feedstuff
           format: double
-          example: 0.55
+          example: 87
         feedstuff_id:
           type: string
           description: feedstuff_id represent identification number of ration feedstuff between systems
