@@ -15,14 +15,14 @@ paths:
       parameters:
         - name: start_date
           in: query
-          description: Start date from when to fetch data, ISO8601 date (e.g. 2023-02-10T05:50:00)
+          description: Start date from when to fetch data, ISO8601 UTC date (e.g. 2023-02-10T05:50:00)
           required: true
           schema:
             type: string
             format: date-time
         - name: end_date
           in: query
-          description: End date from when to fetch data, ISO8601 date (e.g. 2023-02-10T05:55:00)
+          description: End date from when to fetch data, ISO8601 UTC date (e.g. 2023-02-10T05:55:00)
           required: true
           schema:
             type: string
