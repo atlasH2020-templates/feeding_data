@@ -85,6 +85,7 @@ components:
           type: number
           description: Fresh matter amount of feedstuff in ration (kg)
           format: double
+          example: 12.50
         cost_kg_freshmatter:
           type: number
           description: Fresh matter cost per kg of ration feedstuff (USD)
@@ -105,7 +106,7 @@ components:
           example: Sojabohnen (gesch., Bioprofin)
         type:
           type: string
-          description: Feed type of feedstuff in ration, todo check completeness
+          description: Feed type of feedstuff in ration
           enum: 
             - dry_forage
             - corn_silage
@@ -128,7 +129,7 @@ components:
             - water
           example: dry_forage
       required:
-        - amount_drymatter
+        - amount_freshmatter
         - drymatter_percentage
         - feedstuff_id
         - name
@@ -160,8 +161,9 @@ components:
           description: Start date of ration, as ISO8601 date
       required:
         - feedstuffs
-        - pens
+        - pen_allocations
         - name
+        - ration_ref
     PenAllocation:
       title: Pen
       type: object
