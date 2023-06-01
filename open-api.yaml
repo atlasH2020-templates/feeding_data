@@ -160,10 +160,9 @@ components:
           format: date
           description: Start date of ration, as ISO8601 date
       required:
-        - feedstuffs
-        - pen_allocations
-        - name
         - ration_ref
+        - feedstuffs
+        - name
     PenAllocation:
       title: Pen
       type: object
@@ -176,6 +175,9 @@ components:
           example: 31.5
         urn:
           $ref: "#/components/schemas/URN"
+      required:
+        - feed_intake_per_animal
+        - urn
     RecipeDailyReport:
       title: RecipeDailyReport
       type: object
@@ -189,6 +191,9 @@ components:
           type: string
           description: ration_ref is an optional identifier to connect rations between different systems
           example: 40ac1b42-acfb-11ed-afa1-0242ac120002
+      required:
+        - loadings
+        - ration_ref
     Unloading:
       title: Unloading
       type: object
@@ -215,6 +220,10 @@ components:
           description: Unloaded amount in this pen from feeding load in kg freshmass for this unloading
           format: double
           example: 900
+      required:
+        - start_date
+        - pen_urn
+        - unloaded_amount_kg
     Loading:
       title: Loading
       type: object
@@ -239,6 +248,9 @@ components:
           description: List of unloadings per day
           items:
             $ref: '#/components/schemas/Unloading'
+      required:
+        - start_date
+        - feedstuffs
     FeedstuffsLoading:
       title: Ingredients
       type: object
@@ -257,6 +269,10 @@ components:
           description: Actual amount of feedstuff in feeding load in kg freshmass
           format: double
           example: 750
+      required:
+        - calculated_amount_kg
+        - feedstuff_id
+        - loaded_amount_kg
   securitySchemes:
     bearerAuth: 
       type: "http"
