@@ -1,0 +1,113 @@
+<html>
+<head>
+    <style type="text/css">
+        body { font-family: courier; font-size:12px; margin-left: 42px; width: 465px; white-space: pre-line; }
+        h2 { margin: 10px 0 0 -22px; font-size:12px; padding: 0 !important }
+        table { font-size: 10px; margin-left: -22px; width: 480px; overflow-wrap: break-work; }
+        table td { overflow-wrap: break-work; }
+        div.header { padding: 0; margin: 0 0 0 -22px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+ATLAS Service Template Specification
+Name                                                    feeding_data
+Version                                                     0.0.3
+Author(s)             MmmooOgle, J. V&ouml;lker (fodjan GmbH)
+</div>
+
+<h2>The "feeding_data" ATLAS Service Template</h2>
+<div style="margin-left: -22px;">
+
+<h2>Abstract</h2>
+This document describes the specification for the feeding_data service whose purpose is to provide an interface for data-exchange of planned and actual feeding.
+
+</div>
+<h2>1 Introduction</h2>
+Exchange planned rations and actual feeding reports is an important step to keep animals healthy, control the feed costs and reduce environmental impact by increasing the precision of feeding.
+
+This service provide endpoints to read the planned rations out of the system and write back actual feeded amounts.
+
+<h2>2 Terminology</h2>
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and indicate requirement levels for compliant implementations.
+
+The notation "[xxx]" (xxx in square brackets) is equivalent to "array of xxx".
+
+When used alone, the term "feeding_data" refers to "feeding_data service template". Instead, "animal_data service" is equivalent to "a service implementing the animal_data service template".
+
+<h2>3 Pre-requisites</h2>
+
+The service has to manage rations and their usage dates.
+
+The value of the system increases with extended feed-models which can calculate figures like expected yield-output and methan-emissions based on the feedstuffs mixed in that ration.
+
+<h2>4 Use Scenarios</h2>
+
+There are two usage scenarios:
+- Send planned rations to service and over the service-owner to feed-wagons
+- Read actual feeding reports into the system
+
+The following data model describes the 3 main entities and how they interact with the service animal_data.
+
+<img src="doc/atlas feedingmodel datamodel.png" style="width:450px" />
+
+<h2>5 Service Template API Overview</h2>
+
+Two Endpoints:
+
+- POST /ration: send a ration to the system
+- GET /feedingreport: return all feeding reports in the given time range
+
+<h3>Calculations</h3>
+
+- POST /ration
+
+The amount values in the ration are calculated to actual loading and unloading amounts typically in the following way:
+
+```
+// 1. Calculate freshmass sum of ration advice
+total_ration_freshmatter_amount = sum(RATION.feedstuffs[].amount_freshmatter)
+
+// 2. Scale up each single feedstuff with the total loading-amount
+loadings[].feedstuffs[].calculated_amount_kg = RATION.feedstuffs[].amount_freshmatter / total_ration_freshmatter_amount * INTERNAL.loadings[].total_loading_amount * INTERNAL.other-correction-factors
+```
+
+<h2>6 Data Formats</h2>
+
+<h3>Ration</h3>
+A ration is planned for a certain date and calculated for a single animal per day. This comes mostly out of ration calculation software and is used as starting point to program a mixer wagon. There are other entities like a pen included to calculate the real amount per group and per feeding.
+
+<h3>Feedstuff</h3>
+A feedstuff is a single component for a ration like grassilage or corn.
+
+<h3>FeedingReport</h3>
+This is the record from an actual feeding. It includes several entities:
+- loadings: which amount of feedstuffs are really loaded and mixed compared to the planned ration
+- unloadings: each ration might be planned for multiple pens. the unloadings describe how much of the mix was unloaded at which pen. also here compare plan and actual amounts.
+
+<h2>7 Access and Authentication</h2>
+
+Farmers MUST have an account setup at the service provider in order to authenticate and access API endpoints. The service implementor is responsible for the creation of accounts; it is not covered in the ATLAS Service Template specifications.
+
+Unless specifically documented in the OpenAPI specifications, all operation must include credentials in form of Bearer authentication (also called token authentication). Clients can obtain an access token on behalf of their user from the service's authorization server (see ATLAS service pairing).
+
+Some of the information held by animal_data services are considered to be sensitive from a GDPR perspective.The service's authorization server MUST request the client's end-user consent at service pairing time in order to deliver an access token.
+
+<h2>8 Dynamic Behaviour</h2>
+
+When a ration is send to the service there might be feeding reports when this ration is actually used some days later available at the feedingreport endpoint.
+
+<h3>Validation</h3>
+<h4>Pen Usage</h4>
+The service has to validate, that a pen is not assigned to more than one ration in parallel in one query.
+
+- If a pen is already used in another ration of the same body, the service will respond with a 409 status.
+- If a pen is already used in a earlier request, than it is deleted in the prior ration and added only to the new one.
+
+<h4>Usage of ration_ref</h4>
+Use of same ration_ref will override the existing ration with the same ref.
+
+</body>
+</html>
